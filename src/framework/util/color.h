@@ -48,7 +48,12 @@ public:
     }
 
     Color(const Color& color) = default;
-
+    Color(const Color& color, float alpha) {
+        m_r = color.m_r;
+        m_g = color.m_g;
+        m_b = color.m_b;
+        m_a = alpha * 255;
+    }
     uint8_t a() const { return m_a; }
     uint8_t b() const { return m_b; }
     uint8_t g() const { return m_g; }
@@ -60,6 +65,7 @@ public:
     float rF() const { return m_r / 255.f; }
 
     uint32_t rgba() const { return static_cast<uint32_t>(m_a | m_b << 8 | m_g << 16 | m_r << 24); }
+    size_t hash() const { return rgba(); }
 
     void setRed(const int r) { m_r = r; }
     void setGreen(const int g) { m_g = g; }

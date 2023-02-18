@@ -190,8 +190,8 @@ std::string Application::getOs()
 std::string Application::getBuildRevision()
 {
     std::stringstream ss;
-    ss << std::fixed << std::setprecision(3) << (static_cast<float>(GIT_COMMITS) / 1000);
+    ss << std::fixed << std::setprecision(3) << (static_cast<float>(1) / 1000);
     return ss.str();
 }
-std::string Application::getVersion() { return ADD_QUOTES(GIT_VERSION); }
-std::string Application::getBuildCommit() { return ADD_QUOTES(GIT_BRANCH); }
+std::string Application::getVersion() { return ADD_QUOTES(1); }
+std::string Application::getBuildCommit() { return ADD_QUOTES(1); }
