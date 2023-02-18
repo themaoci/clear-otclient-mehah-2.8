@@ -35,8 +35,6 @@
 
 using namespace otclient::protobuf;
 
-enum class TextureType { NONE, SMOOTH, ALL_BLANK };
-
 enum FrameGroupType : uint8_t
 {
     FrameGroupDefault = 0,
@@ -163,6 +161,16 @@ enum ThingFlagAttr :uint64_t
     ThingFlagAttrDefaultAction = static_cast<uint64_t>(1) << 44
 };
 
+enum STACK_PRIORITY : uint8_t
+{
+    GROUND = 0,
+    GROUND_BORDER = 1,
+    ON_BOTTOM = 2,
+    ON_TOP = 3,
+    CREATURE = 4,
+    COMMON_ITEMS = 5
+};
+
 enum PLAYER_ACTION : uint8_t
 {
     PLAYER_ACTION_NONE = 0,
@@ -266,7 +274,7 @@ public:
     void exportImage(const std::string& fileName);
 #endif
 
-    void draw(const Point& dest, int layer, int xPattern, int yPattern, int zPattern, int animationPhase, uint32_t flags, TextureType textureType, Color color = Color::white, LightView* lightView = nullptr, const DrawBufferPtr& drawBuffer = nullptr);
+    void draw(const Point& dest, int layer, int xPattern, int yPattern, int zPattern, int animationPhase, uint32_t flags, const Color& color, LightView* lightView = nullptr, const DrawConductor& conductor = DEFAULT_DRAW_CONDUCTOR);
 
     uint16_t getId() { return m_id; }
     ThingCategory getCategory() { return m_category; }
@@ -355,6 +363,11 @@ public:
     bool hasAction() { return (m_flags & ThingFlagAttrDefaultAction); }
     bool isOpaque() { if (m_opaque == -1) getTexture(0); return m_opaque == 1; }
 
+    bool isItem() const { return m_category == ThingCategoryItem; }
+    bool isEffect() const { return m_category == ThingCategoryEffect; }
+    bool isMissile() const { return m_category == ThingCategoryMissile; }
+    bool isCreature() const { return m_category == ThingCategoryCreature; }
+
     PLAYER_ACTION getDefaultAction() { return m_defaultAction; }
 
     uint16_t getClassification() { return m_upgradeClassification; }
@@ -364,11 +377,13 @@ public:
     float getOpacity() { return m_opacity; }
     void setPathable(bool var);
     int getExactHeight();
-    TexturePtr getTexture(int animationPhase, TextureType txtType = TextureType::NONE);
+    TexturePtr getTexture(int animationPhase);
 
 private:
     static ThingFlagAttr thingAttrToThingFlagAttr(ThingAttr attr);
     static Size getBestTextureDimension(int w, int h, int count);
+
+    void loadTexture(int animationPhase);
 
     struct TextureData
     {
@@ -379,9 +394,7 @@ private:
             Point offsets;
         };
 
-        TexturePtr main;
-        TexturePtr smooth;
-        TexturePtr blank;
+        TexturePtr source;
         std::vector<Pos> pos;
     };
 
@@ -431,4 +444,6 @@ private:
 
     std::vector<uint32_t> m_spritesIndex;
     std::vector<TextureData> m_textureData;
+
+    std::atomic_bool m_loading;
 };

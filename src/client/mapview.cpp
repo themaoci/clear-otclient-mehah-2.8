@@ -85,8 +85,6 @@ MapView::MapView() : m_pool(g_drawPool.get<DrawPoolFramed>(DrawPoolType::MAP))
         g_painter->resetOpacity();
     });
 
-    m_shadowBuffer = std::make_shared<DrawBuffer>(DrawPool::DrawOrder::FIFTH, false);
-
     setVisibleDimension(Size(15, 11));
 }
 
@@ -184,7 +182,7 @@ void MapView::drawFloor()
 
             if (m_shadowFloorIntensity > 0 && z == cameraPosition.z + 1) {
                 g_drawPool.setOpacity(m_shadowFloorIntensity, true);
-                g_drawPool.addFilledRect(m_rectDimension, Color::black, m_shadowBuffer);
+                g_drawPool.addFilledRect(m_rectDimension, Color::black, m_shadowConductor);
             }
 
             if (canFloorFade())
@@ -194,7 +192,7 @@ void MapView::drawFloor()
         }
 
         if (m_posInfo.rect.contains(g_window.getMousePosition())) {
-            if (m_crosshairTexture) {
+            if (m_crosshairTexture && m_mousePosition.isValid()) {
                 const auto& point = transformPositionTo2D(m_mousePosition, cameraPosition);
                 const auto& crosshairRect = Rect(point, m_tileSize, m_tileSize);
                 g_drawPool.addTexturedRect(crosshairRect, m_crosshairTexture);
@@ -215,7 +213,7 @@ void MapView::drawText()
             continue;
 
         const auto& pos = staticText->getPosition();
-        if (pos.z != m_posInfo.camera.z)
+        if (pos.z != m_posInfo.camera.z && staticText->getMessageMode() == Otc::MessageNone)
             continue;
 
         Point p = transformPositionTo2D(pos, m_posInfo.camera) - m_posInfo.drawOffset;

@@ -72,7 +72,7 @@ Color Outfit::getColor(int color)
     }
 
     if (loc3 == 0)
-        return Color(0, 0, 0);
+        return Color::alpha;
 
     if (loc2 == 0) {
         const int loc7 = static_cast<int>(loc3 * 255);
@@ -118,4 +118,33 @@ void Outfit::resetClothes()
     setLegs(0);
     setFeet(0);
     setMount(0);
+}
+
+void Outfit::setHead(uint8_t head) {
+    if (m_head == head)
+        return;
+
+    m_head = head;
+    m_headColor = getColor(head);
+}
+void Outfit::setBody(uint8_t body) {
+    if (m_body == body)
+        return;
+
+    m_body = body;
+    m_bodyColor = getColor(body);
+}
+void Outfit::setLegs(uint8_t legs) {
+    if (m_legs == legs)
+        return;
+
+    m_legs = legs;
+    m_legsColor = getColor(legs);
+}
+void Outfit::setFeet(uint8_t feet) {
+    if (m_feet == feet)
+        return;
+
+    m_feet = feet;
+    m_feetColor = getColor(feet);
 }

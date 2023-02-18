@@ -22,6 +22,7 @@
 
 #include "graphicalapplication.h"
 #include <thread>
+#include <client/game.h>
 #include <client/map.h>
 #include <framework/core/asyncdispatcher.h>
 #include <framework/core/clock.h>
@@ -34,6 +35,7 @@
 #include <framework/input/mouse.h>
 #include <framework/platform/platformwindow.h>
 #include <framework/ui/uimanager.h>
+#include <framework/ui/uiwidget.h>
 #include "framework/stdext/time.h"
 
 #ifdef FRAMEWORK_SOUND
@@ -119,15 +121,15 @@ void GraphicalApplication::terminate()
 void GraphicalApplication::run()
 {
     // run the first poll
+    mainPoll();
     poll();
-    Application::poll();
 
     // show window
     g_window.show();
 
     // run the second poll
+    mainPoll();
     poll();
-    Application::poll();
 
     g_lua.callGlobalField("g_app", "onRun");
 
@@ -137,30 +139,33 @@ void GraphicalApplication::run()
 
     std::condition_variable foreCondition, txtCondition;
 
+    UIWidgetPtr mapWidget;
+
     // clang c++20 dont support jthread
     std::thread t1([&]() {
         while (!m_stopping) {
-            g_particles.poll();
-            Application::poll();
+            poll();
 
             if (!g_window.isVisible()) {
                 stdext::millisleep(10);
                 continue;
             }
 
-            if (foreground->canRepaint()) {
+            if (foreground->canRepaint())
                 foreCondition.notify_one();
-            }
 
-            txt->setEnable(isDrawingTexts());
-            if (txt->isEnabled()) {
-                txtCondition.notify_one();
-            }
+            if (g_game.isOnline()) {
+                if (!mapWidget)
+                    mapWidget = g_ui.getRootWidget()->recursiveGetChildById("gameMapPanel");
 
-            {
-                std::scoped_lock l(map->getMutex());
-                g_ui.render(DrawPoolType::MAP);
-            }
+                if (txt->canRepaint())
+                    txtCondition.notify_one();
+
+                {
+                    std::scoped_lock l(map->getMutex());
+                    mapWidget->drawSelf(DrawPoolType::MAP);
+                }
+            } else mapWidget = nullptr;
 
             stdext::millisleep(1);
         }
@@ -180,14 +185,19 @@ void GraphicalApplication::run()
     std::thread t3([&]() {
         std::unique_lock lock(txt->getMutex());
         txtCondition.wait(lock, [&]() -> bool {
-            g_ui.render(DrawPoolType::TEXT);
+            g_textDispatcher.poll();
+
+            txt->setEnable(canDrawTexts());
+            if (mapWidget && txt->isEnabled())
+                mapWidget->drawSelf(DrawPoolType::TEXT);
+
             return m_stopping;
         });
     });
 
     m_running = true;
     while (!m_stopping) {
-        poll();
+        mainPoll();
 
         if (!g_window.isVisible()) {
             stdext::millisleep(10);
@@ -211,11 +221,17 @@ void GraphicalApplication::run()
 
 void GraphicalApplication::poll()
 {
-    g_clock.update();
+    Application::poll();
+    g_particles.poll();
 
 #ifdef FRAMEWORK_SOUND
     g_sounds.poll();
 #endif
+}
+
+void GraphicalApplication::mainPoll()
+{
+    g_clock.update();
 
     // poll window input events
     g_window.poll();
@@ -233,12 +249,13 @@ void GraphicalApplication::close()
 void GraphicalApplication::resize(const Size& size)
 {
     m_onInputEvent = true;
-    g_mainDispatcher.addEvent([=, this] {
+    g_ui.resize(size);
+    m_onInputEvent = false;
+
+    g_mainDispatcher.addEvent([this, size] {
         g_graphics.resize(size);
         g_drawPool.get<DrawPoolFramed>(DrawPoolType::FOREGROUND)->resize(size);
     });
-    g_ui.resize(size);
-    m_onInputEvent = false;
 }
 
 void GraphicalApplication::inputEvent(const InputEvent& event)
@@ -249,4 +266,12 @@ void GraphicalApplication::inputEvent(const InputEvent& event)
 }
 
 void GraphicalApplication::repaint() { g_drawPool.get<DrawPool>(DrawPoolType::FOREGROUND)->repaint(); }
-bool GraphicalApplication::isDrawingTexts() { return m_drawText && (!g_map.getStaticTexts().empty() || !g_map.getAnimatedTexts().empty()); }
+bool GraphicalApplication::canDrawTexts() const { return m_drawText && (!g_map.getStaticTexts().empty() || !g_map.getAnimatedTexts().empty()); }
+
+void GraphicalApplication::setLoadingAsyncTexture(bool v) {
+    if (isEncrypted())
+        v = false;
+
+    m_loadingAsyncTexture = v;
+    g_sprites.reload();
+}

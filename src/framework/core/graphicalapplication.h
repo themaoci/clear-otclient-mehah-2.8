@@ -37,17 +37,18 @@ public:
     void terminate() override;
     void run() override;
     void poll() override;
+    void mainPoll();
     void close() override;
 
-    void setMaxFps(int maxFps) { m_frameCounter.setMaxFps(maxFps); }
+    void setMaxFps(uint16_t maxFps) { m_frameCounter.setMaxFps(maxFps); }
 
-    int getFps() { return m_frameCounter.getFps(); }
-    int getMaxFps() { return m_frameCounter.getMaxFps(); }
+    uint16_t getFps() { return m_frameCounter.getFps(); }
+    uint8_t getMaxFps() { return m_frameCounter.getMaxFps(); }
 
     bool isOnInputEvent() { return m_onInputEvent; }
     bool mustOptimize() {
 #ifdef NDEBUG
-        return m_optimize && getMaxFps() >= getFps() && getFps() < 58;
+        return m_optimize && getMaxFps() >= getFps() && getFps() < 58u;
 #else
         return false;
 #endif
@@ -61,7 +62,18 @@ public:
     bool isDrawingEffectsOnTop() { return m_drawEffectOnTop || mustOptimize(); }
 
     void setDrawTexts(bool v) { m_drawText = v; }
-    bool isDrawingTexts();
+    bool isDrawingTexts() { return m_drawText; }
+
+    bool isLoadingAsyncTexture() { return m_loadingAsyncTexture; }
+    void setLoadingAsyncTexture(bool v);
+
+    bool isEncrypted() {
+#if ENABLE_ENCRYPTION == 1
+        return true;
+#else
+        return false;
+#endif
+    }
 
     void repaint();
 
@@ -70,11 +82,14 @@ protected:
     void inputEvent(const InputEvent& event);
 
 private:
+    bool canDrawTexts() const;
+
     bool m_onInputEvent{ false };
     bool m_optimize{ true };
     bool m_forceEffectOptimization{ false };
     bool m_drawEffectOnTop{ false };
     bool m_drawText{ true };
+    bool m_loadingAsyncTexture{ true };
 
     AdaptativeFrameCounter m_frameCounter;
 };

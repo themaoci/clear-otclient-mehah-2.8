@@ -129,8 +129,6 @@ void Client::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_map", "getThing", &Map::getThing, &g_map);
     g_lua.bindSingletonFunction("g_map", "removeThingByPos", &Map::removeThingByPos, &g_map);
     g_lua.bindSingletonFunction("g_map", "removeThing", &Map::removeThing, &g_map);
-    g_lua.bindSingletonFunction("g_map", "removeStaticText", &Map::removeStaticText, &g_map);
-    g_lua.bindSingletonFunction("g_map", "removeAnimatedText", &Map::removeAnimatedText, &g_map);
     g_lua.bindSingletonFunction("g_map", "removeThingColor", &Map::removeThingColor, &g_map);
     g_lua.bindSingletonFunction("g_map", "colorizeThing", &Map::colorizeThing, &g_map);
     g_lua.bindSingletonFunction("g_map", "clean", &Map::clean, &g_map);
@@ -387,6 +385,8 @@ void Client::registerLuaFunctions()
     g_lua.bindClassMemberFunction<Thing>("setId", &Thing::setId);
     g_lua.bindClassMemberFunction<Thing>("setShader", &Thing::setShader);
     g_lua.bindClassMemberFunction<Thing>("setPosition", &Thing::setPosition);
+    g_lua.bindClassMemberFunction<Thing>("setMarkColor", &Thing::setMarkColor);
+    g_lua.bindClassMemberFunction<Thing>("isMarked", &Thing::isMarked);
     g_lua.bindClassMemberFunction<Thing>("getId", &Thing::getId);
     g_lua.bindClassMemberFunction<Thing>("getTile", &Thing::getTile);
     g_lua.bindClassMemberFunction<Thing>("getPosition", &Thing::getPosition);
@@ -498,7 +498,6 @@ void Client::registerLuaFunctions()
     g_lua.bindClassMemberFunction<Creature>("getIcon", &Creature::getIcon);
     g_lua.bindClassMemberFunction<Creature>("setOutfit", &Creature::setOutfit);
     g_lua.bindClassMemberFunction<Creature>("getOutfit", &Creature::getOutfit);
-    g_lua.bindClassMemberFunction<Creature>("setOutfitColor", &Creature::setOutfitColor);
     g_lua.bindClassMemberFunction<Creature>("getDirection", &Creature::getDirection);
     g_lua.bindClassMemberFunction<Creature>("getStepDuration", &Creature::getStepDuration);
     g_lua.bindClassMemberFunction<Creature>("getStepProgress", &Creature::getStepProgress);
@@ -666,6 +665,7 @@ void Client::registerLuaFunctions()
     g_lua.bindClassMemberFunction<AttachedEffect>("getSpeed", &AttachedEffect::getSpeed);
     g_lua.bindClassMemberFunction<AttachedEffect>("setOnTop", &AttachedEffect::setOnTop);
     g_lua.bindClassMemberFunction<AttachedEffect>("setSpeed", &AttachedEffect::setSpeed);
+    g_lua.bindClassMemberFunction<AttachedEffect>("setOpacity", &AttachedEffect::setOpacity);
     g_lua.bindClassMemberFunction<AttachedEffect>("setOffset", &AttachedEffect::setOffset);
     g_lua.bindClassMemberFunction<AttachedEffect>("setDirOffset", &AttachedEffect::setDirOffset);
     g_lua.bindClassMemberFunction<AttachedEffect>("setOnTopByDir", &AttachedEffect::setOnTopByDir);

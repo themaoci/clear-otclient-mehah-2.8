@@ -32,22 +32,18 @@ public:
     FrameBuffer();
     ~FrameBuffer();
 
-    void release() const { internalRelease(); };
+    void release() const;
     void bind();
     void draw();
+    void draw(const Rect& dest) { prepare(dest, Rect(0, 0, getSize())); draw(); }
 
     void setSmooth(bool enabled) { m_smooth = enabled; m_texture = nullptr; }
-    void setBackuping(bool enabled) { m_backuping = enabled; }
-    void setUseAlphaWriting(bool use) { m_useAlphaWriting = use; }
 
     bool resize(const Size& size);
     bool isValid() const { return m_texture != nullptr; }
     bool canDraw() const { return m_coordsBuffer.getVertexCount() > 0; }
     TexturePtr getTexture() const { return m_texture; }
     Size getSize() const { return m_texture->getSize(); }
-
-    bool isBackuping() const { return m_backuping; }
-    bool isSmooth() const { return m_smooth; }
 
     void setCompositionMode(const CompositionMode mode) { m_compositeMode = mode; }
     void disableBlend() { m_disableBlend = true; }
@@ -57,6 +53,7 @@ protected:
 
     friend class FrameBufferManager;
     friend class DrawPoolManager;
+    friend class DrawPool;
 
 private:
     static uint32_t boundFbo;
@@ -65,22 +62,24 @@ private:
     void internalRelease() const;
     void prepare(const Rect& dest, const Rect& src, const Color& colorClear = Color::alpha);
 
-    Matrix3 m_textureMatrix;
+    Size m_oldSize;
+
+    Matrix3 m_textureMatrix, m_oldTextureMatrix;
     TexturePtr m_texture;
-    TexturePtr m_screenBackup;
 
     uint32_t m_fbo{ 0 };
     uint32_t m_prevBoundFbo{ 0 };
 
     CompositionMode m_compositeMode{ CompositionMode::NORMAL };
 
-    bool m_backuping{ true };
     bool m_smooth{ true };
     bool m_useAlphaWriting{ true };
     bool m_disableBlend{ false };
+    bool m_isScene{ false };
 
     Rect m_dest;
     Rect m_src;
+
     CoordsBuffer m_coordsBuffer;
     CoordsBuffer m_screenCoordsBuffer;
 };

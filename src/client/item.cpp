@@ -45,45 +45,52 @@ ItemPtr Item::create(int id)
     return item;
 }
 
-void Item::draw(const Point& dest, uint32_t flags, TextureType textureType, bool isMarked, LightView* lightView)
+void Item::draw(const Point& dest, uint32_t flags, const Color& c, LightView* lightView)
 {
-    if (m_clientId == 0 || !canDraw())
+    if (!canDraw(m_color))
         return;
 
     // determine animation phase
     const int animationPhase = calculateAnimationPhase();
+    const auto& color = c == Color::white ? m_color : c;
 
-    drawAttachedEffect(dest, lightView, false); // On Bottom
-    if (textureType != TextureType::ALL_BLANK && m_shader)
-        g_drawPool.setShaderProgram(m_shader, true, m_shaderAction);
-    getThingType()->draw(dest, 0, m_numPatternX, m_numPatternY, m_numPatternZ, animationPhase, flags, textureType, m_color, lightView, m_drawBuffer);
-    drawAttachedEffect(dest, lightView, true); // On Top
+    internalDraw(animationPhase, dest, color, false, flags, lightView);
 
-    if (isMarked) {
-        getThingType()->draw(dest, 0, m_numPatternX, m_numPatternY, m_numPatternZ, animationPhase, flags, TextureType::ALL_BLANK, getMarkedColor());
-    }
+    if (isMarked())
+        internalDraw(animationPhase, dest, getMarkedColor(), true, flags);
 }
 
-// Do not change if you do not understand what is being done.
-void Item::createBuffer()
+void Item::internalDraw(int animationPhase, const Point& dest, const Color& color, bool isMarked, uint32_t flags, LightView* lightView)
 {
-    DrawPool::DrawOrder order = DrawPool::DrawOrder::NONE;
-    if (isSingleGround())
-        order = DrawPool::DrawOrder::FIRST;
-    else if (isSingleGroundBorder() && !hasElevation())
-        order = DrawPool::DrawOrder::SECOND;
+    if (isMarked)
+        g_drawPool.setShaderProgram(g_painter->getReplaceColorShader(), true);
+    else {
+        drawAttachedEffect(dest, lightView, false); // On Bottom
+        if (m_shader)
+            g_drawPool.setShaderProgram(m_shader, true, m_shaderAction);
+    }
+    getThingType()->draw(dest, 0, m_numPatternX, m_numPatternY, m_numPatternZ, animationPhase, flags, color, lightView, m_drawConductor);
+    if (!isMarked)
+        drawAttachedEffect(dest, lightView, true); // On Top
+}
 
-    m_drawBuffer = order != DrawPool::DrawOrder::NONE ? std::make_shared<DrawBuffer>(order) : nullptr;
+void Item::setConductor()
+{
+    if (isSingleGround()) {
+        m_drawConductor.agroup = true;
+        m_drawConductor.order = DrawOrder::FIRST;
+    } else if (isSingleGroundBorder() && !hasElevation()) {
+        m_drawConductor.agroup = true;
+        m_drawConductor.order = DrawOrder::SECOND;
+    }
 }
 
 void Item::setPosition(const Position& position, uint8_t stackPos, bool hasElevation)
 {
     Thing::setPosition(position, stackPos);
 
-    if (hasElevation)
-        m_drawBuffer = nullptr;
-    else if (m_drawBuffer)
-        m_drawBuffer->agroup(stackPos == 0);
+    if (hasElevation || m_drawConductor.agroup && stackPos > 0)
+        m_drawConductor.agroup = false;
 }
 
 int Item::getSubType()
@@ -244,7 +251,7 @@ void Item::setId(uint32_t id)
 
     m_clientId = id;
     m_thingType = g_things.getThingType(m_clientId, ThingCategoryItem).get();
-    createBuffer();
+    setConductor();
 
     // Shader example on only items that can be marketed.
     /*
@@ -289,7 +296,7 @@ void Item::setOtbId(uint16_t id)
 
     m_clientId = id;
     m_thingType = g_things.getThingType(m_clientId, ThingCategoryItem).get();
-    createBuffer();
+    setConductor();
 }
 
 void Item::unserializeItem(const BinaryTreePtr& in)

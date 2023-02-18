@@ -76,7 +76,10 @@ class Item : public Thing
 public:
     static ItemPtr create(int id);
 
-    void draw(const Point& dest, uint32_t flags, TextureType textureType = TextureType::NONE, bool isMarked = false, LightView* lightView = nullptr) override;
+    void draw(const Point& dest, uint32_t flags, const Color& color, LightView* lightView = nullptr);
+    void draw(const Point& dest, uint32_t flags, LightView* lightView = nullptr) override {
+        draw(dest, flags, Color::white, lightView);
+    };
 
     void setId(uint32_t id) override;
 
@@ -148,7 +151,8 @@ public:
 #endif
 
 private:
-    void createBuffer();
+    void internalDraw(int animationPhase, const Point& dest, const Color& color, bool isMarked, uint32_t flags, LightView* lightView = nullptr);
+    void setConductor();
 
     uint8_t m_countOrSubType{ 0 };
 

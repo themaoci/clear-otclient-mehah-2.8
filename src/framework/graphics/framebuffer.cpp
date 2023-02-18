@@ -59,6 +59,9 @@ bool FrameBuffer::resize(const Size& size)
     m_texture->setUpsideDown(true);
     m_textureMatrix = g_painter->getTransformMatrix(size);
 
+    m_screenCoordsBuffer.clear();
+    m_screenCoordsBuffer.addRect(Rect{ 0, 0, size });
+
     internalBind();
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture->getId(), 0);
 
@@ -75,7 +78,13 @@ void FrameBuffer::bind()
 {
     internalBind();
 
-    g_painter->resetState();
+    if (m_isScene) {
+        g_painter->resetState();
+    } else {
+        m_oldSize = g_painter->getResolution();
+        m_oldTextureMatrix = g_painter->getProjectionMatrix();
+    }
+
     g_painter->setResolution(getSize(), m_textureMatrix);
     g_painter->setAlphaWriting(m_useAlphaWriting);
 
@@ -83,6 +92,16 @@ void FrameBuffer::bind()
         g_painter->setTexture(nullptr);
         g_painter->setColor(m_colorClear);
         g_painter->drawCoords(m_screenCoordsBuffer, DrawMode::TRIANGLE_STRIP);
+    } else if (!m_isScene) {
+        g_painter->clear(Color::alpha);
+    }
+}
+
+void FrameBuffer::release() const
+{
+    internalRelease();
+    if (!m_isScene) {
+        g_painter->setResolution(m_oldSize, m_oldTextureMatrix);
     }
 }
 
@@ -113,13 +132,11 @@ void FrameBuffer::internalRelease() const
 
 void FrameBuffer::prepare(const Rect& dest, const Rect& src, const Color& colorClear)
 {
-    Rect _dest(0, 0, getSize());
-    Rect _src = _dest;
+    const auto& _dest = dest.isValid() ? dest : Rect(0, 0, getSize());
+    const auto& _src = src.isValid() ? src : _dest;
 
-    if (dest.isValid()) _dest = dest;
-    if (src.isValid()) _src = src;
-
-    m_colorClear = colorClear;
+    if (m_colorClear != colorClear)
+        m_colorClear = colorClear;
 
     if (_src != m_src || _dest != m_dest) {
         m_src = _src;
@@ -127,8 +144,5 @@ void FrameBuffer::prepare(const Rect& dest, const Rect& src, const Color& colorC
 
         m_coordsBuffer.clear();
         m_coordsBuffer.addQuad(m_dest, m_src);
-
-        m_screenCoordsBuffer.clear();
-        m_screenCoordsBuffer.addRect(Rect{ 0, 0, getSize() });
     }
 }

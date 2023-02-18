@@ -36,7 +36,7 @@
 class Thing : public LuaObject
 {
 public:
-    virtual void draw(const Point& /*dest*/, uint32_t flags, TextureType /*textureType*/ = TextureType::NONE, bool isMarked = false, LightView* /*lightView*/ = nullptr) {}
+    virtual void draw(const Point& /*dest*/, uint32_t flags, LightView* /*lightView*/ = nullptr) {}
 
     virtual void setId(uint32_t /*id*/) {}
     virtual void setPosition(const Position& position, uint8_t stackPos = 0, bool hasElevation = false);
@@ -49,8 +49,8 @@ public:
     const TilePtr& getTile();
     ContainerPtr getParentContainer();
 
-    int getStackPriority();
     int getStackPos();
+    int getStackPriority();
 
     virtual bool isItem() { return false; }
     virtual bool isEffect() { return false; }
@@ -97,17 +97,17 @@ public:
 
     virtual bool isContainer() { return m_thingType->isContainer(); }
 
-    bool isTopGround() const { return m_thingType->isTopGround(); }
-    bool isTopGroundBorder() const { return m_thingType->isTopGroundBorder(); }
-    bool isSingleGround() const { return m_thingType->isSingleGround(); }
-    bool isSingleGroundBorder() const { return m_thingType->isSingleGroundBorder(); }
-
     bool isCommon() { return !isGround() && !isGroundBorder() && !isOnTop() && !isCreature() && !isOnBottom(); }
 
-    bool isGround() { return m_thingType->isGround(); }
-    bool isGroundBorder() { return m_thingType->isGroundBorder(); }
-    bool isOnBottom() { return m_thingType->isOnBottom(); }
-    bool isOnTop() { return m_thingType->isOnTop(); }
+    bool isTopGround() { return !isCreature() && m_thingType->isTopGround(); }
+    bool isTopGroundBorder() { return !isCreature() && m_thingType->isTopGroundBorder(); }
+    bool isSingleGround() { return !isCreature() && m_thingType->isSingleGround(); }
+    bool isSingleGroundBorder() { return !isCreature() && m_thingType->isSingleGroundBorder(); }
+    bool isGround() { return !isCreature() && m_thingType->isGround(); }
+    bool isGroundBorder() { return !isCreature() && m_thingType->isGroundBorder(); }
+    bool isOnBottom() { return !isCreature() && m_thingType->isOnBottom(); }
+    bool isOnTop() { return !isCreature() && m_thingType->isOnTop(); }
+
     bool isMarketable() { return m_thingType->isMarketable(); }
     bool isStackable() { return m_thingType->isStackable(); }
     bool isFluidContainer() { return m_thingType->isFluidContainer(); }
@@ -158,16 +158,26 @@ public:
     uint16_t getClassification() const { return m_thingType->getClassification(); }
 
     void canDraw(bool canDraw) { m_canDraw = canDraw; }
-    inline bool canDraw() const { return m_canDraw && m_clientId > 0; }
-
-    void destroyBuffer() { m_drawBuffer = nullptr; }
+    inline bool canDraw(const Color& color = Color::white) const {
+        return m_canDraw && m_clientId > 0 && color.aF() > Fw::MIN_ALPHA && m_thingType && m_thingType->getOpacity() > Fw::MIN_ALPHA;
+    }
 
     void setShader(const std::string_view name);
+    void ungroup() { m_drawConductor.agroup = false; }
 
     virtual void onPositionChange(const Position& /*newPos*/, const Position& /*oldPos*/) {}
     virtual void onAppear() {}
-    virtual void onDisappear();
-    const Color& getMarkedColor() { m_markedColor.setAlpha(0.1f + std::abs(500 - g_clock.millis() % 1000) / 1000.0f); return m_markedColor; }
+    virtual void onDisappear() {};
+    const Color& getMarkedColor() {
+        if (m_markedColor == Color::white)
+            return Color::white;
+
+        m_markedColor.setAlpha(0.1f + std::abs(500 - g_clock.millis() % 1000) / 1000.0f);
+        return m_markedColor;
+    }
+
+    bool isMarked() { return m_markedColor != Color::white; }
+    void setMarkColor(const Color& color) { if (m_markedColor != color) m_markedColor = color; }
 
     void attachEffect(const AttachedEffectPtr& obj);
     void clearAttachedEffects();
@@ -187,8 +197,7 @@ protected:
     void setAttachedEffectDirection(Otc::Direction dir) const
     {
         for (const auto& effect : m_attachedEffects) {
-            if (effect->m_thingType->getCategory() == ThingCategoryCreature ||
-                effect->m_thingType->getCategory() == ThingCategoryMissile)
+            if (effect->m_thingType->isCreature() || effect->m_thingType->isMissile())
                 effect->m_direction = dir;
         }
     }
@@ -201,9 +210,9 @@ protected:
 
     Position m_position;
     ThingType* m_thingType{ nullptr };
-    DrawBufferPtr m_drawBuffer;
+    DrawConductor m_drawConductor{ false, DrawOrder::THIRD };
 
-    Color m_markedColor{ Color::yellow };
+    Color m_markedColor{ Color::white };
 
     // Shader
     PainterShaderProgramPtr m_shader;

@@ -41,19 +41,27 @@ enum class DrawPoolType : uint8_t
     UNKNOW
 };
 
+enum DrawOrder : uint8_t
+{
+    FIRST,  // GROUND
+    SECOND, // BORDER
+    THIRD,  // BOTTOM & TOP
+    FOURTH, // TOP ~ TOP
+    FIFTH,  // ABOVE ALL - MISSILE
+    LAST
+};
+
+struct DrawConductor
+{
+    bool agroup{ false };
+    uint8_t order{ DrawOrder::FIRST };
+};
+
+static const DrawConductor DEFAULT_DRAW_CONDUCTOR;
+
 class DrawPool
 {
 public:
-    enum class DrawOrder
-    {
-        NONE = -1,
-        FIRST,  // GROUND
-        SECOND, // BORDER
-        THIRD,  // BOTTOM & TOP
-        FOURTH, // TOP ~ TOP
-        FIFTH,  // ABOVE ALL - MISSILE
-        LAST
-    };
 
     void setEnable(bool v) { m_enabled = v; }
 
@@ -72,25 +80,7 @@ public:
     void setScaleFactor(float scale) { m_scaleFactor = scale; }
     inline float getScaleFactor() const { return m_scaleFactor; }
 
-    void resetState();
-
     std::mutex& getMutex() { return m_mutex; }
-
-    struct PoolState
-    {
-        Matrix3 transformMatrix;
-        float opacity{ 1.f };
-        CompositionMode compositionMode{ CompositionMode::NORMAL };
-        BlendEquation blendEquation{ BlendEquation::ADD };
-        Rect clipRect;
-        PainterShaderProgram* shaderProgram{ nullptr };
-        std::function<void()> action{ nullptr };
-        Color color;
-        TexturePtr texture;
-        size_t hash{ 0 };
-
-        bool operator==(const PoolState& s2) const { return hash == s2.hash; }
-    };
 
 protected:
 
@@ -111,10 +101,27 @@ protected:
         uint16_t intValue{ 0 };
     };
 
+    struct PoolState
+    {
+        Matrix3 transformMatrix = DEFAULT_MATRIX3;
+        float opacity{ 1.f };
+        CompositionMode compositionMode{ CompositionMode::NORMAL };
+        BlendEquation blendEquation{ BlendEquation::ADD };
+        Rect clipRect;
+        PainterShaderProgram* shaderProgram{ nullptr };
+        std::function<void()> action{ nullptr };
+        Color color{ Color::white };
+        TexturePtr texture;
+        size_t hash{ 0 };
+
+        bool operator==(const PoolState& s2) const { return hash == s2.hash; }
+        void execute() const;
+    };
+
     struct DrawObject
     {
         DrawObject(std::function<void()> action) : action(std::move(action)) {}
-        DrawObject(PoolState& state, const DrawBufferPtr& buffer) : buffer(buffer), state(std::move(state)) {}
+        DrawObject(PoolState& state, const CoordsBufferPtr& coordsBuffer) : coords(coordsBuffer), state(std::move(state)) {}
         DrawObject(const DrawMode drawMode, PoolState& state, DrawMethod& method) :
             drawMode(drawMode), state(std::move(state)) { methods.emplace_back(std::move(method)); }
 
@@ -125,7 +132,7 @@ protected:
         }
 
         DrawMode drawMode{ DrawMode::TRIANGLES };
-        DrawBufferPtr buffer;
+        CoordsBufferPtr coords;
         PoolState state;
         std::vector<DrawMethod> methods;
         std::function<void()> action{ nullptr };
@@ -157,10 +164,13 @@ private:
     static DrawPool* create(const DrawPoolType type);
 
     void add(const Color& color, const TexturePtr& texture, DrawPool::DrawMethod& method,
-             DrawMode drawMode = DrawMode::TRIANGLES, const DrawBufferPtr& drawBuffer = nullptr,
+             DrawMode drawMode = DrawMode::TRIANGLES, const DrawConductor& conductor = DEFAULT_DRAW_CONDUCTOR,
              const CoordsBufferPtr& coordsBuffer = nullptr);
 
-    size_t updateHash(PoolState& state, const DrawPool::DrawMethod& method);
+    void resetState();
+    inline void setFPS(uint16_t fps) { m_refreshDelay = fps; }
+
+    PoolState getState(const DrawPool::DrawMethod& method, const TexturePtr& texture, const Color& color);
 
     float getOpacity() const { return m_state.opacity; }
     Rect getClipRect() { return m_state.clipRect; }
@@ -195,21 +205,26 @@ private:
             ++m_currentFloor;
     }
 
+    void disableUpdateHash() {
+        m_status.first = 0;
+        m_updateHash = false;
+    }
+
     virtual bool hasFrameBuffer() const { return false; };
     virtual DrawPoolFramed* toPoolFramed() { return nullptr; }
 
     bool canRepaint(bool autoUpdateStatus);
 
     bool m_enabled{ true };
+    bool m_updateHash{ true };
     bool m_alwaysGroupDrawings{ false };
 
-    uint8_t m_currentOrder{ 0 };
     uint8_t m_currentFloor{ 0 };
 
     uint16_t m_refreshDelay{ 0 }, m_shaderRefreshDelay{ 0 };
     uint32_t m_onlyOnceStateFlag{ 0 };
 
-    PoolState m_state;
+    PoolState m_state, m_oldState;
 
     DrawPoolType m_type{ DrawPoolType::UNKNOW };
 
@@ -256,46 +271,3 @@ private:
 };
 
 extern DrawPoolManager g_drawPool;
-
-class DrawBuffer
-{
-public:
-    DrawBuffer(DrawPool::DrawOrder order, bool agroup = true) : m_agroup(agroup), m_order(order) {}
-    void agroup(bool v) { m_agroup = v; }
-    void setOrder(DrawPool::DrawOrder order) { m_order = order; }
-
-    void invalidate() { m_i = -1; }
-
-    bool validate(const Point& p)
-    {
-        const size_t hash = p.hash();
-        if (m_ref != hash) { m_ref = hash; invalidate(); }
-        return isValid();
-    }
-
-private:
-    static DrawBufferPtr createTemporaryBuffer(DrawPool::DrawOrder order)
-    {
-        auto buffer = std::make_shared<DrawBuffer>(order);
-        buffer->m_i = -2; // identifier to say it is a temporary buffer.
-        return buffer;
-    }
-
-    inline bool isValid() const { return m_i != -1; }
-    inline bool isTemporary() const { return m_i == -2; }
-
-    inline CoordsBuffer* getCoords() { return (m_coords ? m_coords : m_coords = std::make_shared<CoordsBuffer>()).get(); }
-
-    int m_i{ -1 };
-    bool m_agroup{ true };
-
-    DrawPool::DrawOrder m_order{ DrawPool::DrawOrder::FIRST };
-    size_t m_ref{ 0 };
-    size_t m_stateHash{ 0 };
-
-    std::vector<size_t> m_hashs;
-    CoordsBufferPtr m_coords;
-
-    friend class DrawPool;
-    friend class DrawPoolManager;
-};

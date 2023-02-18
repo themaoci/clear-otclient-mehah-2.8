@@ -26,6 +26,7 @@
 #include "scheduledevent.h"
 
 #include <queue>
+#include <thread>
 
  // @bindsingleton g_dispatcher
 class EventDispatcher
@@ -39,11 +40,13 @@ public:
     ScheduledEventPtr cycleEvent(const std::function<void()>& callback, int delay);
 
 private:
-    std::deque<EventPtr> m_eventList;
-    int m_pollEventsSize{};
+    size_t m_pollEventsSize{};
     bool m_disabled{ false };
+
     std::recursive_mutex m_mutex;
+    std::deque<EventPtr> m_eventList;
     std::priority_queue<ScheduledEventPtr, std::deque<ScheduledEventPtr>, ScheduledEvent::Compare> m_scheduledEventList;
 };
 
-extern EventDispatcher g_dispatcher, g_mainDispatcher;
+extern EventDispatcher g_dispatcher, g_textDispatcher, g_mainDispatcher;
+extern std::thread::id g_mainThreadId;

@@ -23,6 +23,7 @@
 #include "drawpoolmanager.h"
 #include "declarations.h"
 #include "painter.h"
+#include <framework/graphics/framebuffermanager.h>
 
 thread_local static uint8_t CURRENT_POOL;
 
@@ -88,7 +89,7 @@ void DrawPoolManager::draw()
             if (pf->m_beforeDraw) pf->m_beforeDraw();
             pf->m_framebuffer->draw();
             if (pf->m_afterDraw) pf->m_afterDraw();
-        } else for (const auto& obj : pool->m_objects[0][static_cast<int>(DrawPool::DrawOrder::FIRST)]) {
+        } else for (const auto& obj : pool->m_objects[0][DrawOrder::FIRST]) {
             drawObject(obj);
         }
     }
@@ -101,39 +102,24 @@ void DrawPoolManager::drawObject(const DrawPool::DrawObject& obj)
         return;
     }
 
-    const bool useGlobalCoord = !obj.buffer;
-    auto& buffer = useGlobalCoord ? m_coordsBuffer : *obj.buffer->m_coords;
-
-    if (useGlobalCoord) {
-        buffer.clear();
+    auto& coords = !obj.coords ? m_coordsBuffer : *obj.coords;
+    if (!obj.coords) {
+        coords.clear();
         for (const auto& method : obj.methods)
-            DrawPool::addCoords(&buffer, method, obj.drawMode);
+            DrawPool::addCoords(&coords, method, obj.drawMode);
     }
 
-    { // Set DrawState
-        const auto& state = obj.state;
-        g_painter->setColor(state.color);
-        g_painter->setOpacity(state.opacity);
-        g_painter->setCompositionMode(state.compositionMode);
-        g_painter->setBlendEquation(state.blendEquation);
-        g_painter->setClipRect(state.clipRect);
-        g_painter->setShaderProgram(state.shaderProgram);
-        g_painter->setTransformMatrix(state.transformMatrix);
-        if (state.action) state.action();
-        if (state.texture)
-            g_painter->setTexture(state.texture->create());
-    }
-
-    g_painter->drawCoords(buffer, obj.drawMode);
+    obj.state.execute();
+    g_painter->drawCoords(coords, obj.drawMode);
 }
 
 void DrawPoolManager::addTexturedCoordsBuffer(const TexturePtr& texture, const CoordsBufferPtr& coords, const Color& color) const
 {
     DrawPool::DrawMethod method;
-    getCurrentPool()->add(color, texture, method, DrawMode::TRIANGLE_STRIP, nullptr, coords);
+    getCurrentPool()->add(color, texture, method, DrawMode::TRIANGLE_STRIP, DEFAULT_DRAW_CONDUCTOR, coords);
 }
 
-void DrawPoolManager::addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src, const Color& color, const DrawBufferPtr& buffer) const
+void DrawPoolManager::addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src, const Color& color, const DrawConductor& condutor) const
 {
     if (dest.isEmpty() || src.isEmpty())
         return;
@@ -143,7 +129,7 @@ void DrawPoolManager::addTexturedRect(const Rect& dest, const TexturePtr& textur
         .dest = dest, .src = src
     };
 
-    getCurrentPool()->add(color, texture, method, DrawMode::TRIANGLE_STRIP, buffer);
+    getCurrentPool()->add(color, texture, method, DrawMode::TRIANGLE_STRIP, condutor);
 }
 
 void DrawPoolManager::addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src, const Color& color) const
@@ -166,14 +152,14 @@ void DrawPoolManager::addTexturedRepeatedRect(const Rect& dest, const TexturePtr
     getCurrentPool()->add(color, texture, method);
 }
 
-void DrawPoolManager::addFilledRect(const Rect& dest, const Color& color, const DrawBufferPtr& buffer) const
+void DrawPoolManager::addFilledRect(const Rect& dest, const Color& color, const DrawConductor& condutor) const
 {
     if (dest.isEmpty())
         return;
 
     DrawPool::DrawMethod method{ DrawPool::DrawMethodType::RECT, dest };
 
-    getCurrentPool()->add(color, nullptr, method, DrawMode::TRIANGLES, buffer);
+    getCurrentPool()->add(color, nullptr, method, DrawMode::TRIANGLES, condutor);
 }
 
 void DrawPoolManager::addFilledTriangle(const Point& a, const Point& b, const Point& c, const Color& color) const
@@ -186,7 +172,7 @@ void DrawPoolManager::addFilledTriangle(const Point& a, const Point& b, const Po
     getCurrentPool()->add(color, nullptr, method);
 }
 
-void DrawPoolManager::addBoundingRect(const Rect& dest, const Color& color, int innerLineWidth) const
+void DrawPoolManager::addBoundingRect(const Rect& dest, const Color& color, uint16_t innerLineWidth) const
 {
     if (dest.isEmpty() || innerLineWidth == 0)
         return;
@@ -194,7 +180,7 @@ void DrawPoolManager::addBoundingRect(const Rect& dest, const Color& color, int 
     DrawPool::DrawMethod method{
         .type = DrawPool::DrawMethodType::BOUNDING_RECT,
         .dest = dest,
-        .intValue = static_cast<uint16_t>(innerLineWidth)
+        .intValue = innerLineWidth
     };
 
     getCurrentPool()->add(color, nullptr, method);
@@ -202,7 +188,30 @@ void DrawPoolManager::addBoundingRect(const Rect& dest, const Color& color, int 
 
 void DrawPoolManager::addAction(const std::function<void()>& action) const
 {
-    getCurrentPool()->m_objects[0][static_cast<uint8_t>(DrawPool::DrawOrder::FIRST)].emplace_back(action);
+    getCurrentPool()->m_objects[0][DrawOrder::FIRST].emplace_back(action);
+}
+
+void DrawPoolManager::bindFrameBuffer(const Size& size) const
+{
+    getCurrentPool()->m_oldState = std::move(getCurrentPool()->m_state);
+    getCurrentPool()->m_state = {};
+
+    g_drawPool.addAction([size, drawState = getCurrentPool()->m_state] {
+        drawState.execute();
+        const auto& frame = g_framebuffers.getTemporaryFrameBuffer();
+        frame->resize(size);
+        frame->bind();
+    });
+}
+void DrawPoolManager::releaseFrameBuffer(const Rect& dest) const
+{
+    getCurrentPool()->m_state = std::move(getCurrentPool()->m_oldState);
+    g_drawPool.addAction([dest, drawState = getCurrentPool()->m_state] {
+        const auto& frame = g_framebuffers.getTemporaryFrameBuffer();
+        frame->release();
+        drawState.execute();
+        frame->draw(dest);
+    });
 }
 
 void DrawPoolManager::use(const DrawPoolType type, const Rect& dest, const Rect& src, const Color& colorClear)

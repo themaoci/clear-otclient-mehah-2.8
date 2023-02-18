@@ -76,12 +76,13 @@ public:
     BlendEquation getBlendEquation() const { return m_blendEquation; }
     CompositionMode getCompositionMode() const { return m_compositionMode; }
     PainterShaderProgram* getShaderProgram() const { return m_shaderProgram; }
+    PainterShaderProgramPtr getReplaceColorShader() const { return m_drawReplaceColorProgram; }
 
     void setColor(const Color& color) { m_color = color; }
     void setTexture(Texture* texture);
     void setOpacity(float opacity) { m_opacity = opacity; }
     void setClipRect(const Rect& clipRect);
-    void setResolution(const Size& resolution, const Matrix3& projectionMatrix = {});
+    void setResolution(const Size& resolution, const Matrix3& projectionMatrix = DEFAULT_MATRIX3);
     void setDrawProgram(PainterShaderProgram* drawProgram) { m_drawProgram = drawProgram; }
     void setAlphaWriting(bool enable);
     void setBlendEquation(BlendEquation blendEquation);
@@ -137,6 +138,7 @@ protected:
     PainterShaderProgram* m_drawProgram{ nullptr };
     PainterShaderProgramPtr m_drawTexturedProgram;
     PainterShaderProgramPtr m_drawSolidColorProgram;
+    PainterShaderProgramPtr m_drawReplaceColorProgram;
 };
 
 extern Painter* g_painter;

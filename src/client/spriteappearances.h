@@ -56,7 +56,9 @@ public:
 
     int firstId = 0;
     int lastId = 0;
+
     SpriteLayout spriteLayout = SpriteLayout::ONE_BY_ONE;
+    std::mutex m_mutex;
     std::unique_ptr<uint8_t[]> data;
     std::string file;
 };
@@ -84,7 +86,7 @@ public:
     void saveSpriteToFile(int id, const std::string& file);
 
 private:
-    int m_spritesCount{ 0 };
+    uint32_t m_spritesCount{ 0 };
     std::vector<SpriteSheetPtr> m_sheets;
 };
 

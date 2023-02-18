@@ -33,6 +33,7 @@ public:
     void terminate();
 
     bool loadSpr(std::string file);
+    void reload();
     void unload();
 
 #ifdef FRAMEWORK_EDITOR
@@ -49,6 +50,8 @@ public:
     const TexturePtr& getShadeTexture() const { return m_shadeTexture; }
 
 private:
+    ImagePtr getSpriteImage(int id, const FileStreamPtr& file);
+
     enum
     {
         SPRITE_DATA_SIZE = SPRITE_SIZE * SPRITE_SIZE * 4
@@ -57,16 +60,18 @@ private:
     void generateLightTexture(),
         generateShadeTexture();
 
+    std::string m_lastFileName;
+
     TexturePtr m_lightTexture;
     TexturePtr m_shadeTexture;
 
     bool m_loaded{ false };
     uint32_t m_signature{ 0 };
-    int m_spritesCount{ 0 };
-    int m_spritesOffset{ 0 };
+    uint32_t m_spritesCount{ 0 };
+    uint32_t m_spritesOffset{ 0 };
 
     FileStreamPtr m_spritesFile;
-    std::mutex mutex;
+    std::mutex m_mutex;
 };
 
 extern SpriteManager g_sprites;

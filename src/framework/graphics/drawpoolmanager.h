@@ -46,14 +46,17 @@ public:
     void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Color& color = Color::white) const
     { addTexturedRect(dest, texture, Rect(Point(), texture->getSize()), color); }
 
-    void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src, const Color& color = Color::white, const DrawBufferPtr& buffer = nullptr) const;
+    void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src, const Color& color = Color::white, const DrawConductor& condutor = DEFAULT_DRAW_CONDUCTOR) const;
     void addTexturedCoordsBuffer(const TexturePtr& texture, const CoordsBufferPtr& coords, const Color& color = Color::white) const;
     void addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src, const Color& color = Color::white) const;
     void addTexturedRepeatedRect(const Rect& dest, const TexturePtr& texture, const Rect& src, const Color& color = Color::white) const;
-    void addFilledRect(const Rect& dest, const Color& color = Color::white, const DrawBufferPtr& buffer = nullptr) const;
+    void addFilledRect(const Rect& dest, const Color& color = Color::white, const DrawConductor& condutor = DEFAULT_DRAW_CONDUCTOR) const;
     void addFilledTriangle(const Point& a, const Point& b, const Point& c, const Color& color = Color::white) const;
-    void addBoundingRect(const Rect& dest, const Color& color = Color::white, int innerLineWidth = 1) const;
+    void addBoundingRect(const Rect& dest, const Color& color = Color::white, uint16_t innerLineWidth = 1) const;
     void addAction(const std::function<void()>& action) const;
+
+    void bindFrameBuffer(const Size& size) const;
+    void releaseFrameBuffer(const Rect& dest) const;
 
     void setOpacity(const float opacity, bool onlyOnce = false) const { getCurrentPool()->setOpacity(opacity, onlyOnce); }
     void setClipRect(const Rect& clipRect, bool onlyOnce = false) const { getCurrentPool()->setClipRect(clipRect, onlyOnce); }

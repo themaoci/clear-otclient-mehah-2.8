@@ -50,8 +50,8 @@ Texture::Texture(const ImagePtr& image, bool buildMipmaps, bool compress) : m_un
 {
     generateHash();
 
-    m_compress = compress;
-    m_buildMipmaps = buildMipmaps;
+    setProp(Prop::compress, compress);
+    setProp(Prop::buildMipmaps, buildMipmaps);
     m_image = image;
     setupSize(image->getSize());
 }
@@ -72,13 +72,14 @@ Texture* Texture::create()
 {
     if (m_image) {
         createTexture();
-        uploadPixels(m_image, m_buildMipmaps, m_compress);
+        uploadPixels(m_image, getProp(Prop::buildMipmaps), getProp(Prop::compress));
         m_image = nullptr;
     }
 
     return this;
 }
 
+void Texture::updateImage(const ImagePtr& image) { m_image = image; setupSize(image->getSize()); }
 void Texture::uploadPixels(const ImagePtr& image, bool buildMipmaps, bool compress)
 {
     if (!setupSize(image->getSize()))
@@ -90,7 +91,7 @@ void Texture::uploadPixels(const ImagePtr& image, bool buildMipmaps, bool compre
     do {
         setupPixels(level++, image->getSize(), image->getPixelData(), image->getBpp(), compress);
     } while (buildMipmaps && image->nextMipmap());
-    if (buildMipmaps) m_hasMipmaps = true;
+    if (buildMipmaps) setProp(Prop::buildMipmaps, true);
 
     setupWrap();
     setupFilters();
@@ -105,7 +106,7 @@ void Texture::bind()
 
 void Texture::buildHardwareMipmaps()
 {
-    if (m_hasMipmaps)
+    if (getProp(Prop::hasMipMaps))
         return;
 
 #ifndef OPENGL_ES
@@ -113,7 +114,7 @@ void Texture::buildHardwareMipmaps()
         return;
 #endif
 
-    m_hasMipmaps = true;
+    setProp(Prop::hasMipMaps, true);
 
     bind();
     setupFilters();
@@ -122,30 +123,30 @@ void Texture::buildHardwareMipmaps()
 
 void Texture::setSmooth(bool smooth)
 {
-    if (smooth == m_smooth)
+    if (smooth == getProp(Prop::smooth))
         return;
 
-    m_smooth = smooth;
+    setProp(Prop::smooth, smooth);
     bind();
     setupFilters();
 }
 
 void Texture::setRepeat(bool repeat)
 {
-    if (m_repeat == repeat)
+    if (getProp(Prop::repeat) == repeat)
         return;
 
-    m_repeat = repeat;
+    setProp(Prop::repeat, repeat);
     bind();
     setupWrap();
 }
 
 void Texture::setUpsideDown(bool upsideDown)
 {
-    if (m_upsideDown == upsideDown)
+    if (getProp(Prop::upsideDown) == upsideDown)
         return;
 
-    m_upsideDown = upsideDown;
+    setProp(Prop::upsideDown, upsideDown);
     setupTranformMatrix();
 }
 
@@ -162,6 +163,9 @@ void Texture::createTexture()
 
 bool Texture::setupSize(const Size& size)
 {
+    if (m_size == size)
+        return true;
+
     // checks texture max size
     if (std::max<int>(size.width(), size.height()) > g_graphics.getMaxTextureSize()) {
         g_logger.error(stdext::format("loading texture with size %dx%d failed, "
@@ -180,7 +184,7 @@ bool Texture::setupSize(const Size& size)
 
 void Texture::setupWrap() const
 {
-    const GLint texParam = m_repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
+    const GLint texParam = getProp(Prop::repeat) ? GL_REPEAT : GL_CLAMP_TO_EDGE;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texParam);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texParam);
 }
@@ -189,11 +193,11 @@ void Texture::setupFilters() const
 {
     GLenum minFilter;
     GLenum magFilter;
-    if (m_smooth) {
-        minFilter = m_hasMipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
+    if (getProp(Prop::smooth)) {
+        minFilter = getProp(Prop::hasMipMaps) ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
         magFilter = GL_LINEAR;
     } else {
-        minFilter = m_hasMipmaps ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST;
+        minFilter = getProp(Prop::hasMipMaps) ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST;
         magFilter = GL_NEAREST;
     }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
@@ -202,14 +206,43 @@ void Texture::setupFilters() const
 
 void Texture::setupTranformMatrix()
 {
-    if (m_upsideDown) {
+    const static Size SIZE32x64(32, 64);
+    const static Size SIZE64x32(64, 32);
+    const static Size SIZE64x128(64, 128);
+    const static Size SIZE128x256(128, 256);
+    const static Size SIZE256x512(256, 512);
+    const static Size SIZE512x1024(512, 1024);
+
+    const static Matrix3 MATRIX32x32_CACHED = toMatrix(32);
+    const static Matrix3 MATRIX64x64_CACHED = toMatrix(64);
+    const static Matrix3 MATRIX128x128_CACHED = toMatrix(128);
+    const static Matrix3 MATRIX256x256_CACHED = toMatrix(256);
+    const static Matrix3 MATRIX512x512_CACHED = toMatrix(512);
+
+    const static Matrix3 MATRIX32x64_CACHED = toMatrix(SIZE32x64);
+    const static Matrix3 MATRIX64x32_CACHED = toMatrix(SIZE64x32);
+    const static Matrix3 MATRIX64x128_CACHED = toMatrix(SIZE64x128);
+    const static Matrix3 MATRIX128x256_CACHED = toMatrix(SIZE128x256);
+    const static Matrix3 MATRIX256x512_CACHED = toMatrix(SIZE256x512);
+    const static Matrix3 MATRIX512x1024_CACHED = toMatrix(SIZE512x1024);
+
+    if (getProp(Prop::upsideDown)) {
         m_transformMatrix = { 1.0f / m_size.width(), 0.0f,                                                  0.0f,
                               0.0f,                 -1.0f / m_size.height(),                                0.0f,
                               0.0f,                  m_size.height() / static_cast<float>(m_size.height()), 1.0f };
     } else {
-        m_transformMatrix = { 1.0f / m_size.width(), 0.0f,                     0.0f,
-                              0.0f,                  1.0f / m_size.height(),   0.0f,
-                              0.0f,                  0.0f,                     1.0f };
+        if (m_size == 32) m_transformMatrix = MATRIX32x32_CACHED;
+        else if (m_size == 64) m_transformMatrix = MATRIX64x64_CACHED;
+        else if (m_size == 128) m_transformMatrix = MATRIX128x128_CACHED;
+        else if (m_size == 256) m_transformMatrix = MATRIX256x256_CACHED;
+        else if (m_size == 512) m_transformMatrix = MATRIX512x512_CACHED;
+        else if (m_size == SIZE32x64) m_transformMatrix = MATRIX32x64_CACHED;
+        else if (m_size == SIZE64x32) m_transformMatrix = MATRIX64x32_CACHED;
+        else if (m_size == SIZE64x128) m_transformMatrix = MATRIX64x128_CACHED;
+        else if (m_size == SIZE128x256) m_transformMatrix = MATRIX128x256_CACHED;
+        else if (m_size == SIZE256x512) m_transformMatrix = MATRIX256x512_CACHED;
+        else if (m_size == SIZE512x1024) m_transformMatrix = MATRIX512x1024_CACHED;
+        else m_transformMatrix = toMatrix(m_size);
     }
 }
 

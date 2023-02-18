@@ -35,7 +35,11 @@ Tile::Tile(const Position& position) : m_position(position) {}
 
 void Tile::drawThing(const ThingPtr& thing, const Point& dest, int flags, LightView* lightView)
 {
-    thing->draw(dest, flags, TextureType::NONE, m_selectType != TileSelectType::NONE && m_highlightThingId == thing->getThingType()->getId(), lightView);
+    const bool isMarked = m_selectType != TileSelectType::NONE && m_highlightThingId == thing->getThingType()->getId();
+
+    thing->setMarkColor(isMarked ? Color::yellow : Color::white);
+
+    thing->draw(dest, flags, lightView);
 
     if (thing->isItem()) {
         m_drawElevation += thing->getElevation();
@@ -50,17 +54,10 @@ void Tile::draw(const Point& dest, const MapPosInfo& mapRect, int flags, bool is
     m_lastDrawDest = dest;
 
     for (const auto& thing : m_things) {
-        if (!thing->isGround() && !thing->isGroundBorder())
+        if (!thing->isGround() && !thing->isGroundBorder() && !thing->isOnBottom())
             break;
 
         drawThing(thing, dest - m_drawElevation * g_drawPool.getScaleFactor(), flags, lightView);
-    }
-
-    if (hasBottomItem()) {
-        for (const auto& item : m_things) {
-            if (!item->isOnBottom()) continue;
-            drawThing(item, dest - m_drawElevation * g_drawPool.getScaleFactor(), flags, lightView);
-        }
     }
 
     if (hasCommonItem()) {
@@ -170,11 +167,11 @@ void Tile::addThing(const ThingPtr& thing, int stackPos)
         return;
 
     if (thing->isEffect()) {
-        const EffectPtr& newEffect = thing->static_self_cast<Effect>();
+        const auto& newEffect = thing->static_self_cast<Effect>();
 
         const bool mustOptimize = g_app.mustOptimize() || g_app.isForcedEffectOptimization();
 
-        for (const EffectPtr& prevEffect : m_effects) {
+        for (const auto& prevEffect : m_effects) {
             if (!prevEffect->canDraw())
                 continue;
 
@@ -246,10 +243,10 @@ void Tile::addThing(const ThingPtr& thing, int stackPos)
     // Do not change if you do not understand what is being done.
     {
         if (const auto& ground = getGround()) {
-            --stackPos;
+            stackPos = std::max<int>(--stackPos, 0);
             if (ground->isTopGround()) {
-                ground->destroyBuffer();
-                thing->destroyBuffer();
+                ground->ungroup();
+                thing->ungroup();
             }
         }
     }
@@ -351,7 +348,7 @@ std::vector<ItemPtr> Tile::getItems()
 
 EffectPtr Tile::getEffect(uint16_t id) const
 {
-    for (const EffectPtr& effect : m_effects)
+    for (const auto& effect : m_effects)
         if (effect->getId() == id)
             return effect;
 
@@ -360,7 +357,7 @@ EffectPtr Tile::getEffect(uint16_t id) const
 
 int Tile::getGroundSpeed()
 {
-    if (const ItemPtr& ground = getGround())
+    if (const auto& ground = getGround())
         return ground->getGroundSpeed();
 
     return 100;
@@ -435,10 +432,10 @@ CreaturePtr Tile::getTopCreature(const bool checkAround)
     // check for walking creatures in tiles around
     if (checkAround) {
         for (const auto& pos : m_position.getPositionsAround()) {
-            const TilePtr& tile = g_map.getTile(pos);
+            const auto& tile = g_map.getTile(pos);
             if (!tile) continue;
 
-            for (const CreaturePtr& c : tile->getCreatures()) {
+            for (const auto& c : tile->getCreatures()) {
                 if (c->isWalking() && c->getLastStepFromPosition() == m_position && c->getStepProgress() < .75f) {
                     return c;
                 }
@@ -605,8 +602,7 @@ void Tile::onAddInMapView()
                 if (x == 0 && y == 0)
                     continue;
 
-                const TilePtr& tile = g_map.getTile(m_position.translated(x, y));
-                if (tile && (tile->hasCreature() || tile->hasEffect() || tile->hasTopItem())) {
+                if (const auto& tile = g_map.getTile(m_position.translated(x, y))) {
                     tile->m_drawTopAndCreature = false;
                     m_tilesRedraw.emplace_back(tile);
                 }
@@ -788,7 +784,7 @@ void Tile::unselect()
 bool Tile::canRender(uint32_t& flags, const Position& cameraPosition, const AwareRange viewPort)
 {
     const int8_t dz = m_position.z - cameraPosition.z;
-    const Position checkPos = m_position.translated(dz, dz);
+    const auto& checkPos = m_position.translated(dz, dz);
 
     bool draw = true;
 
