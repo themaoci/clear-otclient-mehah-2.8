@@ -39,8 +39,8 @@ ModalButton < Button
 
 ModalDialog < MainWindow
   id: modalDialog
-  size: 280 97
-  &minimumWidth: 200
+  size: 400 100
+  &minimumWidth: 300
   &maximumWidth: 600
   &minimumChoices: 4
   &maximumChoices: 10
