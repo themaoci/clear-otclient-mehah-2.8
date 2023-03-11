@@ -268,6 +268,10 @@ public:
     void resetLastCamera() const;
 
     void setAwareRange(const AwareRange& range);
+    void luaSetAwareRange(const uint8_t X, const uint8_t Y)
+    {
+        setAwareRange({ X , Y, (uint8_t)(X + 1), (uint8_t)(Y + 1) });
+    }
     void resetAwareRange();
     AwareRange getAwareRange() const { return m_awareRange; }
 

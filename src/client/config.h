@@ -24,7 +24,7 @@
 
  // GENERAL
 #define SPRITE_SIZE 32
-#define ASYNC_DISPATCHER_MAX_THREAD 4
+#define ASYNC_DISPATCHER_MAX_THREAD 6
 
 // APPEARANCES
 #define BYTES_IN_SPRITE_SHEET 384 * 384 * 4
@@ -81,3 +81,6 @@
 #define STATE_RPC_TEXT "github.com/mehah/otclient" // State Text
 #define RPC_LARGE_IMAGE "rpc-logo" // Large Image Name (Imported to API)
 #define RPC_LARGE_TEXT "OTClient - Redemption" // Large Text (Text showed at tooltip large image)
+
+
+//#define FRAMEWORK_EDITOR 1
