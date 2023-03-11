@@ -423,10 +423,10 @@ function doCreatureFitFilters(creature) -- Check if creature fit current applied
     end
 
     local pos = creature:getPosition()
-    if not pos then
+    if not pos or not creature:canBeSeen() then
         return false
     end
-
+    
     local localPlayer = g_game.getLocalPlayer()
     if not localPlayer then
         return false
