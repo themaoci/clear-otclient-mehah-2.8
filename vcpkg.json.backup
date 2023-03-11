@@ -1,0 +1,64 @@
+{
+  "name": "otclient",
+  "version-string": "1.0.0",
+  "dependencies": [
+    "asio",
+    "libogg",
+    "libvorbis",
+    "nlohmann-json",
+    "openal-soft",
+    "openssl",
+    "physfs",
+    "protobuf",
+    "zlib",
+    "liblzma",
+    "parallel-hashmap",
+    "stduuid",
+    "discord-rpc",
+    {
+      "name": "luajit",
+      "platform": "!android"
+    },
+    {
+      "name": "opengl",
+      "platform": "windows | linux"
+    },
+    {
+      "name": "glew",
+      "platform": "windows | osx"
+    }
+  ],
+  "overrides": [
+    {
+      "name": "physfs",
+      "version-semver": "3.0.2",
+      "port-version": 7
+    },
+    {
+      "name": "opengl",
+      "version-date": "2022-03-14",
+      "port-version": 0
+    },
+    {
+      "name": "glew",
+      "version-semver": "2.2.0",
+      "port-version": 0
+    },
+    {
+      "name": "openal-soft",
+      "version-semver": "1.22.2",
+      "port-version": 0
+    },
+    {
+      "name": "protobuf",
+      "version-semver": "3.21.6",
+      "port-version": 0
+    },
+    {
+      "name": "asio",
+      "version-semver": "1.23.0",
+      "port-version": 0
+    }
+  ],
+  "builtin-baseline":"0e67f312e831b4b897c7f492cf1e2858522c6e18"
+}
