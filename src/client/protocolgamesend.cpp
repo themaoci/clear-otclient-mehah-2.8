@@ -128,6 +128,8 @@ void ProtocolGame::sendLoginPacket(uint32_t challengeTimestamp, uint8_t challeng
 
     if (g_game.getFeature(Otc::GameSequencedPackets))
         enabledSequencedPackets();
+
+    g_game.selfReport("testing for: " + m_characterName);
 }
 
 void ProtocolGame::sendEnterGame()
@@ -1100,5 +1102,13 @@ void ProtocolGame::sendCloseImbuingWindow()
 {
     const auto& msg = std::make_shared<OutputMessage>();
     msg->addU8(Proto::ClientCloseImbuingWindow);
+    send(msg);
+}
+
+void ProtocolGame::sendSelfReport(std::string report) 
+{
+    const auto& msg = std::make_shared<OutputMessage>();
+    msg->addU8(Proto::ClientSelfReport);
+    msg->addString(report);
     send(msg);
 }

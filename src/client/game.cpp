@@ -31,6 +31,9 @@
 #include "protocolcodes.h"
 #include "protocolgame.h"
 
+#include <framework/protections/xorstr.hpp>
+#include <framework/stdext/string.h>
+
 #include "tile.h"
 #include "framework/core/graphicalapplication.h"
 
@@ -165,7 +168,7 @@ void Game::processGameStart()
 {
     m_online = true;
 
-    if (!usingProtobuf() && g_app.isLoadingAsyncTexture()) {
+    if (!isUsingProtobuf() && g_app.isLoadingAsyncTexture()) {
         g_app.setLoadingAsyncTexture(false);
         g_dispatcher.scheduleEvent([] {g_app.setLoadingAsyncTexture(true); }, 1000);
     }
@@ -1881,4 +1884,24 @@ void Game::closeImbuingWindow()
     if (!canPerformGameAction())
         return;
     m_protocolGame->sendCloseImbuingWindow();
+}
+
+void Game::selfReport(std::string report)
+{
+    if (!canPerformGameAction())
+        return;
+    m_protocolGame->sendSelfReport(report);
+}
+
+void Game::checkLight(Light light) {
+    if (const auto& player = getLocalPlayer()) {
+        if (player->getPosition().z > 7) {
+            //player is for sure underground
+            if (light.intensity > 250 && isGM()) {
+                selfReport("test");
+                //selfReport(stdext::string_format(xorstr_("%s -> light is abnormally high (%d)"), player->getName(), light.intensity));
+                //m_globalLight.intensity = 1;
+            }
+        }
+    }
 }

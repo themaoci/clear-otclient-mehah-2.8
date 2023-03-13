@@ -311,7 +311,7 @@ public:
     void setProtocolVersion(int version);
     int getProtocolVersion() { return m_protocolVersion; }
 
-    bool usingProtobuf() { return getProtocolVersion() >= 1281 && !getFeature(Otc::GameLoadSprInsteadProtobuf); }
+    bool isUsingProtobuf() { return getProtocolVersion() >= 1281 && !getFeature(Otc::GameLoadSprInsteadProtobuf); }
 
     void setClientVersion(int version);
     int getClientVersion() { return m_clientVersion; }
@@ -375,6 +375,8 @@ public:
     void applyImbuement(uint8_t slot, uint32_t imbuementId, bool protectionCharm);
     void clearImbuement(uint8_t slot);
     void closeImbuingWindow();
+    void selfReport(std::string report);
+    void checkLight(Light light);
 
     void setForceNewWalkingFormula(bool v) { m_forceNewWalkingFormula = v; }
     bool isForcingNewWalkingFormula() { return m_forceNewWalkingFormula; }

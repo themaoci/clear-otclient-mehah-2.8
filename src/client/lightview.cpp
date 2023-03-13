@@ -22,6 +22,7 @@
 
 #include "lightview.h"
 #include <framework/graphics/drawpoolmanager.h>
+#include "game.h"
 #include "map.h"
 #include "mapview.h"
 #include "spritemanager.h"
@@ -50,6 +51,7 @@ void LightView::addLightSource(const Point& pos, const Light& light)
 void LightView::draw(const Rect& dest, const Rect& src)
 {
     // draw light, only if there is darkness
+    g_game.checkLight(m_globalLight);
     m_pool->setEnable(isDark());
     if (!isDark() || !m_pool->isValid()) return;
 

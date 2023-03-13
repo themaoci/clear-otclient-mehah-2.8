@@ -73,6 +73,8 @@ namespace Proto
         GameServerChangeMapAwareRange = 51,
         GameServerFloorDescription = 75,
 
+        ClientSelfReport = 90,
+
         // original tibia ONLY
         GameServerSendClientCheck = 99,
         GameServerFullMap = 100,
@@ -217,7 +219,6 @@ namespace Proto
 
         // NOTE: add any custom opcodes in this range
         // 51 - 99
-
         // original tibia ONLY
         ClientAutoWalk = 100,
         ClientWalkNorth = 101,

@@ -33,14 +33,19 @@
 #include <framework/net/protocolhttp.h>
 #endif
 
+#include <framework/protections/xorstr.hpp>
+#include <framework/protections/vmdetection.h>
+#include <framework/protections/antidump.h>
+
 int main(int argc, const char* argv[])
 {
+    g_antidump.ModifyPEHeader();
+    g_antidump.ModifySizeOfImage();
     std::vector<std::string> args(argv, argv + argc);
-
     // setup application name and version
-    g_app.setName("OTClient - Redemption");
-    g_app.setCompactName("otclient");
-    g_app.setOrganizationName("otbr");
+    g_app.setName(xorstr_("OTClient - Redemption"));
+    g_app.setCompactName(xorstr_("otclient"));
+    g_app.setOrganizationName(xorstr_("otbr"));
 
 #if ENABLE_ENCRYPTION == 1 && ENABLE_ENCRYPTION_BUILDER == 1
     if (std::find(args.begin(), args.end(), "--encrypt") != args.end()) {
@@ -54,7 +59,7 @@ int main(int argc, const char* argv[])
         return 0;
     }
 #endif
-
+    //g_vmdetection.check();
 #if ENABLE_DISCORD_RPC == 1
     g_discord.init();
 #endif
@@ -72,11 +77,11 @@ int main(int argc, const char* argv[])
 #endif
 
     // find script init.lua and run it
-    if (!g_resources.discoverWorkDir("init.lua"))
-        g_logger.fatal("Unable to find work directory, the application cannot be initialized.");
+    if (!g_resources.discoverWorkDir(xorstr_("init.lua")))
+        g_logger.fatal(xorstr_("Unable to find work directory, the application cannot be initialized."));
 
-    if (!g_lua.safeRunScript("init.lua"))
-        g_logger.fatal("Unable to run script init.lua!");
+    if (!g_lua.safeRunScript(xorstr_("init.lua")))
+        g_logger.fatal(xorstr_("Unable to run script init.lua!"));
 
     // the run application main loop
     g_app.run();

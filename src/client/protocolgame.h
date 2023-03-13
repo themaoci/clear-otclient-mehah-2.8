@@ -129,7 +129,7 @@ public:
     void sendApplyImbuement(uint8_t slot, uint32_t imbuementId, bool protectionCharm);
     void sendClearImbuement(uint8_t slot);
     void sendCloseImbuingWindow();
-
+    void sendSelfReport(std::string report);
     // otclient only
     void sendChangeMapAwareRange(int xrange, int yrange);
 
