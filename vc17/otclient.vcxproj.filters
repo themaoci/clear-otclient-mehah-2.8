@@ -112,6 +112,12 @@
     <Filter Include="Source Files\framework\discord">
       <UniqueIdentifier>{ec2d9dd0-52dd-4258-83be-2ceb7ec02b73}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\framework\protections">
+      <UniqueIdentifier>{9d30b030-f1dc-49d2-a506-505919265e75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\framework\protections">
+      <UniqueIdentifier>{33a4e755-bec8-4ed8-bdf2-da71269d64d8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\framework\luafunctions.cpp">
@@ -548,6 +554,12 @@
     </ClCompile>
     <ClCompile Include="..\src\framework\discord\discord.cpp">
       <Filter>Source Files\framework\discord</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\framework\protections\vmdetection.cpp">
+      <Filter>Source Files\framework\protections</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\framework\protections\antidump.cpp">
+      <Filter>Source Files\framework\protections</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1060,6 +1072,15 @@
     </ClInclude>
     <ClInclude Include="..\src\framework\discord\discord.h">
       <Filter>Header Files\framework\discord</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\framework\protections\vmdetection.h">
+      <Filter>Header Files\framework\protections</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\framework\protections\xorstr.hpp">
+      <Filter>Header Files\framework\protections</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\framework\protections\antidump.h">
+      <Filter>Header Files\framework\protections</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

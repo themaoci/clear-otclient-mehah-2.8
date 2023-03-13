@@ -378,6 +378,8 @@ IF %ERRORLEVEL% EQU 0 (
     <ClCompile Include="..\src\framework\platform\win32crashhandler.cpp" />
     <ClCompile Include="..\src\framework\platform\win32platform.cpp" />
     <ClCompile Include="..\src\framework\platform\win32window.cpp" />
+    <ClCompile Include="..\src\framework\protections\antidump.cpp" />
+    <ClCompile Include="..\src\framework\protections\vmdetection.cpp" />
     <ClCompile Include="..\src\framework\sound\combinedsoundsource.cpp" />
     <ClCompile Include="..\src\framework\sound\oggsoundfile.cpp" />
     <ClCompile Include="..\src\framework\sound\soundbuffer.cpp" />
@@ -538,6 +540,9 @@ IF %ERRORLEVEL% EQU 0 (
     <ClInclude Include="..\src\framework\platform\platform.h" />
     <ClInclude Include="..\src\framework\platform\platformwindow.h" />
     <ClInclude Include="..\src\framework\platform\win32window.h" />
+    <ClInclude Include="..\src\framework\protections\antidump.h" />
+    <ClInclude Include="..\src\framework\protections\vmdetection.h" />
+    <ClInclude Include="..\src\framework\protections\xorstr.hpp" />
     <ClInclude Include="..\src\framework\sound\combinedsoundsource.h" />
     <ClInclude Include="..\src\framework\sound\declarations.h" />
     <ClInclude Include="..\src\framework\sound\oggsoundfile.h" />
