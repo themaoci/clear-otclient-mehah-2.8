@@ -681,7 +681,7 @@ void ThingType::loadTexture(int animationPhase)
     const int indexSize = textureLayers * m_numPatternX * m_numPatternY * m_numPatternZ;
     const auto& textureSize = getBestTextureDimension(m_size.width(), m_size.height(), indexSize);
     const auto& fullImage = useCustomImage ? Image::load(m_customImage) : std::make_shared<Image>(textureSize * SPRITE_SIZE);
-    const bool protobufSupported = g_game.usingProtobuf();
+    const bool protobufSupported = g_game.isUsingProtobuf();
 
     static Color maskColors[] = { Color::red, Color::green, Color::blue, Color::yellow };
 
