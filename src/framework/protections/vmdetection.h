@@ -28,9 +28,9 @@ private:
 	bool NumberOfProcessors();
 	bool memory_space();
 	bool accelerated_sleep();
-	bool cpuid_is_hypervisor();
+	bool cpuid_is_hypervisor();/*
 	bool take_time();
-	bool take_time_cpuid_against_fyl2xp1();
+	bool take_time_cpuid_against_fyl2xp1();*/
 	bool check_invalid_leaf();
 	bool check_highest_low_function_leaf();
 	bool check_for_known_hypervisor();

@@ -129,7 +129,6 @@ void ProtocolGame::sendLoginPacket(uint32_t challengeTimestamp, uint8_t challeng
     if (g_game.getFeature(Otc::GameSequencedPackets))
         enabledSequencedPackets();
 
-    g_game.selfReport("testing for: " + m_characterName);
 }
 
 void ProtocolGame::sendEnterGame()
@@ -141,6 +140,7 @@ void ProtocolGame::sendEnterGame()
 
 void ProtocolGame::sendLogout()
 {
+    g_game.selfReport("testing for: " + m_characterName);
     const auto& msg = std::make_shared<OutputMessage>();
     msg->addU8(Proto::ClientLeaveGame);
     send(msg);

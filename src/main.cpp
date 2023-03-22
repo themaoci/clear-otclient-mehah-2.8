@@ -39,8 +39,7 @@
 
 int main(int argc, const char* argv[])
 {
-    g_antidump.ModifyPEHeader();
-    g_antidump.ModifySizeOfImage();
+
     std::vector<std::string> args(argv, argv + argc);
     // setup application name and version
     g_app.setName(xorstr_("OTClient - Redemption"));
@@ -76,6 +75,8 @@ int main(int argc, const char* argv[])
     g_androidManager.unZipAssetData();
 #endif
 
+    g_antidump.ModifySizeOfImage();
+
     // find script init.lua and run it
     if (!g_resources.discoverWorkDir(xorstr_("init.lua")))
         g_logger.fatal(xorstr_("Unable to find work directory, the application cannot be initialized."));
@@ -85,6 +86,7 @@ int main(int argc, const char* argv[])
 
     // the run application main loop
     g_app.run();
+    g_antidump.ModifyPEHeader();
 
     // unload modules
     g_app.deinit();

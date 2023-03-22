@@ -36,9 +36,9 @@ void VMDetection::check() {
 	if (cpuid_is_hypervisor()) {
 		executeDetection(16);
 	}
-	if (take_time_cpuid_against_fyl2xp1()) {
-		executeDetection(17);
-	}
+	//if (take_time_cpuid_against_fyl2xp1()) {
+	//	executeDetection(17);
+	//}
 	if (check_highest_low_function_leaf()) {
 		executeDetection(18);
 	}
@@ -113,12 +113,12 @@ bool VMDetection::known_hostnames() {
 	TCHAR* DNSHostName;
 
 	if (NULL == (NetBIOSHostName = get_netbios_hostname())) {
-		return;
+		return true;
 	}
 
 	if (NULL == (DNSHostName = get_dns_hostname())) {
 		free(NetBIOSHostName);
-		return;
+		return true;
 	}
 
 	TCHAR msg[256];
@@ -135,6 +135,7 @@ bool VMDetection::known_hostnames() {
 
 	free(NetBIOSHostName);
 	free(DNSHostName);
+	return false;
 }
 
 /*
@@ -214,23 +215,24 @@ bool VMDetection::cpuid_is_hypervisor()
 		return FALSE;
 }
 
+
 // resources [check https://secret.club/2020/01/12/battleye-hypervisor-detection.html] #Improvement Part
-bool VMDetection::take_time_cpuid_against_fyl2xp1()
-{
-	constexpr auto measure_times = 5;
-	auto positives = 0;
-	auto negatives = 0;
-
-	// run the internal VM check multiple times to get an average result
-	for (auto i = measure_times; i != 0; --i)
-		take_time() ? ++positives : ++negatives;
-
-	// if there are more positive results than negative results, the
-	// process is likely running inside a VM
-	const bool decision = (positives >= negatives);
-
-	return decision;
-}
+//bool VMDetection::take_time_cpuid_against_fyl2xp1()
+//{
+//	constexpr auto measure_times = 5;
+//	auto positives = 0;
+//	auto negatives = 0;
+//
+//	// run the internal VM check multiple times to get an average result
+//	for (auto i = measure_times; i != 0; --i)
+//		take_time() ? ++positives : ++negatives;
+//
+//	// if there are more positive results than negative results, the
+//	// process is likely running inside a VM
+//	const bool decision = (positives >= negatives);
+//
+//	return decision;
+//}
 
 // resources https://secret.club/2020/04/13/how-anti-cheats-detect-system-emulation.html
 bool VMDetection::check_invalid_leaf()
