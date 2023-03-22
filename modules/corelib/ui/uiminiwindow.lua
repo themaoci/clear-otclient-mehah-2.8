@@ -83,7 +83,7 @@ function UIMiniWindow:setup()
         if self:isOn() then
             self:maximize()
         else
-            self:minimize()
+            self:minimize(true)
         end
     end
 
@@ -91,7 +91,7 @@ function UIMiniWindow:setup()
         if self:isOn() then
             self:maximize()
         else
-            self:minimize()
+            self:minimize(true)
         end
     end
 end
