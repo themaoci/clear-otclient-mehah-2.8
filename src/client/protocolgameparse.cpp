@@ -1125,7 +1125,7 @@ void ProtocolGame::parseRemoveInventoryItem(const InputMessagePtr& msg)
 
 void ProtocolGame::parseOpenNpcTrade(const InputMessagePtr& msg)
 {
-    std::vector<std::tuple<ItemPtr, std::string, int, int, int>> items;
+    std::vector<std::tuple<ItemPtr, std::string, int, int, int, int>> items;
 
     if (g_game.getFeature(Otc::GameNameOnNpcTrade))
         msg->getString(); // npcName
@@ -1145,6 +1145,7 @@ void ProtocolGame::parseOpenNpcTrade(const InputMessagePtr& msg)
     for (int_fast32_t i = -1; ++i < listCount;) {
         const uint16_t itemId = msg->getU16();
         const uint8_t count = msg->getU8();
+        const uint16_t specialId = msg->getU16();
 
         const auto& item = Item::create(itemId);
         item->setCountOrSubType(count);
@@ -1153,7 +1154,7 @@ void ProtocolGame::parseOpenNpcTrade(const InputMessagePtr& msg)
         uint32_t weight = msg->getU32();
         uint32_t buyPrice = msg->getU32();
         uint32_t sellPrice = msg->getU32();
-        items.emplace_back(item, name, weight, buyPrice, sellPrice);
+        items.emplace_back(item, name, weight, buyPrice, sellPrice, specialId);
     }
 
     Game::processOpenNpcTrade(items);

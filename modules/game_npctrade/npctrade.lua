@@ -295,8 +295,8 @@ end
 function canTradeItem(item)
     if getCurrentTradeType() == BUY then
         return
-            (ignoreCapacity:isChecked() or (not ignoreCapacity:isChecked() and playerFreeCapacity >= item.weight)) and
-                playerMoney >= getItemPrice(item, true)
+        (item.weight == -1 or ignoreCapacity:isChecked() or (not ignoreCapacity:isChecked() and playerFreeCapacity >= item.weight)) and
+            playerMoney >= getItemPrice(item, true)
     else
         return getSellQuantity(item.ptr) > 0
     end
@@ -306,14 +306,19 @@ function refreshItem(item)
     nameLabel:setText(item.name)
 
     if getCurrentTradeType() == BUY then
-        local capacityMaxCount = math.floor(playerFreeCapacity / item.weight)
-        if ignoreCapacity:isChecked() then
-            capacityMaxCount = 65535
-        end
-        local priceMaxCount = math.floor(playerMoney / getItemPrice(item, true))
-        local finalCount = math.max(0, math.min(getMaxAmount(), math.min(priceMaxCount, capacityMaxCount)))
-        quantityScroll:setMinimum(1)
-        quantityScroll:setMaximum(finalCount)
+        if item.weight == -1 then
+            quantityScroll:setMinimum(1)
+            quantityScroll:setMaximum(1)
+        else
+            local capacityMaxCount = math.floor(playerFreeCapacity / item.weight)
+            if ignoreCapacity:isChecked() then
+                capacityMaxCount = 65535
+            end
+            local priceMaxCount = math.floor(playerMoney / getItemPrice(item, true))
+            local finalCount = math.max(0, math.min(getMaxAmount(), math.min(priceMaxCount, capacityMaxCount)))
+            quantityScroll:setMinimum(1)
+            quantityScroll:setMaximum(finalCount)
+            end
     else
         quantityScroll:setMinimum(1)
         quantityScroll:setMaximum(math.max(0, math.min(getMaxAmount(), getSellQuantity(item.ptr))))
@@ -347,7 +352,7 @@ function refreshTradeItems()
         local text = ''
         local name = item.name
         text = text .. name
-        if showWeight then
+        if showWeight and tonumber(item.weight) ~= -1  then
             local weight = string.format('%.2f', item.weight) .. ' ' .. WEIGHT_UNIT
             text = text .. '\n' .. weight
         end
@@ -418,7 +423,14 @@ function onOpenNpcTrade(items)
             local newItem = {}
             newItem.ptr = item[1]
             newItem.name = item[2]
-            newItem.weight = item[3] / 100
+            newItem.specialId = item[6]
+            if tonumber(newItem.specialId) == 0 then
+                newItem.weight = item[3] / 100
+            else
+                newItem.weight = -1
+            end
+            
+
             newItem.price = item[4]
             table.insert(tradeItems[BUY], newItem)
         end
@@ -427,6 +439,12 @@ function onOpenNpcTrade(items)
             local newItem = {}
             newItem.ptr = item[1]
             newItem.name = item[2]
+            newItem.specialId = item[6]
+            if tonumber(newItem.specialId) == 0 then
+                newItem.weight = item[3] / 100
+            else
+                newItem.weight = -1
+            end
             newItem.weight = item[3] / 100
             newItem.price = item[5]
             table.insert(tradeItems[SELL], newItem)
