@@ -2,6 +2,9 @@
 g_effects = {}
 
 function g_effects.fadeIn(widget, time, elapsed)
+    if widget == nil then
+        return
+    end
     if not elapsed then
         elapsed = 0
     end
