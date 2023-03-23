@@ -442,9 +442,16 @@ void MapView::updateLight()
 
     const auto& cameraPosition = getCameraPosition();
 
-    Light ambientLight = cameraPosition.z > SEA_FLOOR ? Light() : g_map.getLight();
-    ambientLight.intensity = std::max<uint8_t >(m_minimumAmbientLight * 255, ambientLight.intensity);
-    m_lightView->setGlobalLight(ambientLight);
+    if (cameraPosition.z > SEA_FLOOR) { // Underground
+        Light ambientLight = Light();
+        ambientLight.intensity = std::min<uint8_t>(std::max<uint8_t >(m_minimumAmbientLight * 255, ambientLight.intensity), MINIMAL_AMBIENT_LIGHT);
+        m_lightView->setGlobalLight(ambientLight);
+   } else { // Aboveground
+        Light ambientLight = g_map.getLight();
+        ambientLight.intensity = std::max<uint8_t >(m_minimumAmbientLight * 255, ambientLight.intensity);
+        m_lightView->setGlobalLight(ambientLight);
+
+    }
 }
 
 void MapView::onTileUpdate(const Position&, const ThingPtr& thing, const Otc::Operation op)
