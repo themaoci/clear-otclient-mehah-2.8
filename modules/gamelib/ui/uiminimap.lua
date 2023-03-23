@@ -340,12 +340,12 @@ function UIMinimap:createFlagWindow(pos)
 
     self.flagWindow = g_ui.createWidget('MinimapFlagWindow', rootWidget)
 
-    local positionLabel = self.flagWindow:getChildById('position')
+    --local positionLabel = self.flagWindow:getChildById('position')
     local description = self.flagWindow:getChildById('description')
     local okButton = self.flagWindow:getChildById('okButton')
     local cancelButton = self.flagWindow:getChildById('cancelButton')
 
-    positionLabel:setText(string.format('%i, %i, %i', pos.x, pos.y, pos.z))
+    --positionLabel:setText(string.format('%i, %i, %i', pos.x, pos.y, pos.z))
 
     local flagRadioGroup = UIRadioGroup.create()
     for i = 0, 19 do
