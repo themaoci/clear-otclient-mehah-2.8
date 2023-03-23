@@ -5,7 +5,7 @@ LocalesButton < UIWidget
   size: 96 96
   image-size: 96 96
   image-smooth: true
-  text-offset: 0 96
+  text-offset: 0 48
   font: verdana-11px-antialised
 
 UIWindow
@@ -13,23 +13,26 @@ UIWindow
   background-color: #000000
   opacity: 0.90
   clipping: true
-  anchors.fill: parent
+  anchors.top: parent.top
+  anchors.left: parent.left
+  anchors.right: parent.right
+  anchors.bottom: parent.bottom
 
   LocalesMainLabel
     !text: tr('Select your language')
     text-auto-resize: true
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.verticalCenter: parent.verticalCenter
-    margin-top: -100
+    margin-top: -103
 
   Panel
     id: localesPanel
-    margin-top: 50
+    margin-top: 25
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: prev.bottom
     anchors.bottom: parent.bottom
     layout:
       type: grid
-      cell-size: 96 128
+      cell-size: 96 106
       cell-spacing: 32
       flow: true
