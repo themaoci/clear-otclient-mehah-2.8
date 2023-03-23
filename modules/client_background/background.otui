@@ -1,5 +1,6 @@
 Panel
   id: background
+  background-color: #000000
   image-source: /images/background
   image-smooth: true
   image-fixed-ratio: true
@@ -14,6 +15,7 @@ Panel
     id: clientVersionLabel
     background-color: #00000099
     anchors.right: parent.right
+    anchors.left: parent.left
     anchors.bottom: parent.bottom
     text-align: center
     text-auto-resize: true

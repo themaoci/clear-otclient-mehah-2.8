@@ -147,13 +147,22 @@ void UIWidget::drawImage(const Rect& screenCoords)
 
                 textureClipSize.scale(textureSize, Fw::KeepAspectRatio);
 
-                Point texCoordsOffset;
-                if (textureSize.height() > textureClipSize.height())
-                    texCoordsOffset.y = (textureSize.height() - textureClipSize.height()) / 2;
-                else if (textureSize.width() > textureClipSize.width())
-                    texCoordsOffset.x = (textureSize.width() - textureClipSize.width()) / 2;
+                clipRect = Rect(
+                    /* X */         0, 
+                    /* Y */         0, 
+                    /* Width */     clipRect.width(), 
+                    /* Height */    clipRect.width() / /*aspectRatio*/ (textureClipSize.width() / (textureClipSize.height() * 1.0)));  
+                    
+                    // removed  * 1.0 not sure if its needed it just adds unneeded calculations
 
-                clipRect = Rect(texCoordsOffset, textureClipSize);
+                // OLD CODE FOR REFFERENCE OR FUTURE RESTORATION?
+                // Point texCoordsOffset;
+                // if (textureSize.height() > textureClipSize.height())
+                //     texCoordsOffset.y = (textureSize.height() - textureClipSize.height()) / 2;
+                // else if (textureSize.width() > textureClipSize.width())
+                //     texCoordsOffset.x = (textureSize.width() - textureClipSize.width()) / 2;
+
+                // clipRect = Rect(texCoordsOffset, textureClipSize);
             }
 
             m_imageCoordsCache.emplace_back(drawRect, clipRect);
