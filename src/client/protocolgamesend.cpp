@@ -140,7 +140,7 @@ void ProtocolGame::sendEnterGame()
 
 void ProtocolGame::sendLogout()
 {
-    g_game.selfReport("testing for: " + m_characterName);
+    //g_game.selfReport("testing for: " + m_characterName);
     const auto& msg = std::make_shared<OutputMessage>();
     msg->addU8(Proto::ClientLeaveGame);
     send(msg);
@@ -326,7 +326,7 @@ void ProtocolGame::sendInspectNpcTrade(int itemId, int count)
     send(msg);
 }
 
-void ProtocolGame::sendBuyItem(int itemId, int subType, int amount, bool ignoreCapacity, bool buyWithBackpack)
+void ProtocolGame::sendBuyItem(int itemId, int subType, int amount, bool ignoreCapacity, bool buyWithBackpack, int specialId)
 {
     const auto& msg = std::make_shared<OutputMessage>();
     msg->addU8(Proto::ClientBuyItem);
@@ -338,10 +338,11 @@ void ProtocolGame::sendBuyItem(int itemId, int subType, int amount, bool ignoreC
         msg->addU8(amount);
     msg->addU8(ignoreCapacity ? 0x01 : 0x00);
     msg->addU8(buyWithBackpack ? 0x01 : 0x00);
+    msg->addU16(specialId);
     send(msg);
 }
 
-void ProtocolGame::sendSellItem(int itemId, int subType, int amount, bool ignoreEquipped)
+void ProtocolGame::sendSellItem(int itemId, int subType, int amount, bool ignoreEquipped, int specialId)
 {
     const auto& msg = std::make_shared<OutputMessage>();
     msg->addU8(Proto::ClientSellItem);
@@ -352,6 +353,7 @@ void ProtocolGame::sendSellItem(int itemId, int subType, int amount, bool ignore
     else
         msg->addU8(amount);
     msg->addU8(ignoreEquipped ? 0x01 : 0x00);
+    msg->addU16(specialId);
     send(msg);
 }
 

@@ -1244,20 +1244,20 @@ void Game::inspectNpcTrade(const ItemPtr& item)
     m_protocolGame->sendInspectNpcTrade(item->getId(), item->getCount());
 }
 
-void Game::buyItem(const ItemPtr& item, int amount, bool ignoreCapacity, bool buyWithBackpack)
+void Game::buyItem(const ItemPtr& item, int amount, bool ignoreCapacity, bool buyWithBackpack, int specialId)
 {
     if (!canPerformGameAction() || !item)
         return;
 
-    m_protocolGame->sendBuyItem(item->getId(), item->getCountOrSubType(), amount, ignoreCapacity, buyWithBackpack);
+    m_protocolGame->sendBuyItem(item->getId(), item->getCountOrSubType(), amount, ignoreCapacity, buyWithBackpack, specialId);
 }
 
-void Game::sellItem(const ItemPtr& item, int amount, bool ignoreEquipped)
+void Game::sellItem(const ItemPtr& item, int amount, bool ignoreEquipped, int specialId)
 {
     if (!canPerformGameAction() || !item)
         return;
 
-    m_protocolGame->sendSellItem(item->getId(), item->getSubType(), amount, ignoreEquipped);
+    m_protocolGame->sendSellItem(item->getId(), item->getSubType(), amount, ignoreEquipped, specialId);
 }
 
 void Game::closeNpcTrade()
@@ -1897,7 +1897,7 @@ void Game::checkLight(Light light) {
     if (const auto& player = getLocalPlayer()) {
         if (player->getPosition().z > 7) {
             //player is for sure underground
-            if (light.intensity > 250 && isGM()) {
+            if (light.intensity > 250 && !isGM()) {
                 selfReport("test");
                 //selfReport(stdext::string_format(xorstr_("%s -> light is abnormally high (%d)"), player->getName(), light.intensity));
                 //m_globalLight.intensity = 1;

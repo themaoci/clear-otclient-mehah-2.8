@@ -245,8 +245,8 @@ public:
 
     // npc trade related
     void inspectNpcTrade(const ItemPtr& item);
-    void buyItem(const ItemPtr& item, int amount, bool ignoreCapacity, bool buyWithBackpack);
-    void sellItem(const ItemPtr& item, int amount, bool ignoreEquipped);
+    void buyItem(const ItemPtr& item, int amount, bool ignoreCapacity, bool buyWithBackpack, int specialId);
+    void sellItem(const ItemPtr& item, int amount, bool ignoreEquipped, int specialId);
     void closeNpcTrade();
 
     // player trade related
